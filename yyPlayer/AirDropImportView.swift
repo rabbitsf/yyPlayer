@@ -36,12 +36,12 @@ struct AirDropImportView: View {
                 .padding(.top, 20)
                 
                 // Main title
-                Text("Import MP3 Files")
+                Text("Import Music Files")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(.black)
                 
                 // Subtitle
-                Text("Import MP3 files from Files app")
+                Text("Import MP3/M4A files from Files app")
                     .font(.system(size: 16))
                     .foregroundColor(.black.opacity(0.7))
                     .multilineTextAlignment(.center)
@@ -71,7 +71,7 @@ struct AirDropImportView: View {
                         .cornerRadius(12)
                     }
                     
-                    // Import MP3 Files Button - Gray (disabled when no folder)
+                    // Import Music Files Button - Gray (disabled when no folder)
                     Button(action: {
                         showDocumentPicker = true
                     }) {
@@ -79,7 +79,7 @@ struct AirDropImportView: View {
                             Image(systemName: "square.and.arrow.down")
                                 .font(.system(size: 20))
                                 .foregroundColor(.white)
-                            Text("Import MP3 Files")
+                            Text("Import Music Files")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white)
                         }
@@ -320,7 +320,8 @@ struct DocumentPickerView: UIViewControllerRepresentable {
     @Environment(\.dismiss) var dismiss
     
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.mp3, .audio], asCopy: true)
+        // Allow general audio types (covers .mp3, .m4a, etc.)
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.audio], asCopy: true)
         picker.delegate = context.coordinator
         picker.allowsMultipleSelection = true
         return picker
@@ -410,8 +411,9 @@ struct DocumentPickerView: UIViewControllerRepresentable {
                 if fileManager.fileExists(atPath: inboxURL.path) {
                     if let inboxFiles = try? fileManager.contentsOfDirectory(at: inboxURL, includingPropertiesForKeys: nil) {
                         for file in inboxFiles {
-                            // Only remove MP3 files that were likely from this import
-                            if file.pathExtension.lowercased() == "mp3" {
+                            // Only remove audio files that were likely from this import
+                            let ext = file.pathExtension.lowercased()
+                            if ext == "mp3" || ext == "m4a" {
                                 try? fileManager.removeItem(at: file)
                                 print("Cleaned up Inbox file: \(file.lastPathComponent)")
                             }

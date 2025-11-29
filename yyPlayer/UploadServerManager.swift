@@ -259,7 +259,9 @@ class UploadServerManager: ObservableObject {
         
         var uploadedCount = 0
         for (filename, fileData) in uploadedFiles {
-            if !filename.lowercased().hasSuffix(".mp3") {
+            let lowercased = filename.lowercased()
+            // Only accept supported audio formats
+            if !(lowercased.hasSuffix(".mp3") || lowercased.hasSuffix(".m4a")) {
                 continue
             }
             
@@ -616,7 +618,7 @@ class UploadServerManager: ObservableObject {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>MP3 Player Upload</title>
+            <title>Music Player Upload</title>
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
                 body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
@@ -638,7 +640,7 @@ class UploadServerManager: ObservableObject {
             </style>
         </head>
         <body>
-            <h1>MP3 Player Upload Server</h1>
+            <h1>Music Player Upload Server</h1>
             
             <div class="create-folder">
                 <h2>Create New Folder</h2>
@@ -654,8 +656,8 @@ class UploadServerManager: ObservableObject {
             </div>
             
             <div class="upload-area" id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                <p>Drag and drop MP3 files here or click to select</p>
-                <input type="file" id="fileInput" class="file-input" multiple accept=".mp3" onchange="handleFileSelect(event)">
+                <p>Drag and drop MP3/M4A files here or click to select</p>
+                <input type="file" id="fileInput" class="file-input" multiple accept=".mp3,.m4a" onchange="handleFileSelect(event)">
                 <button class="upload-button" onclick="document.getElementById('fileInput').click()">Select Files</button>
             </div>
             
@@ -727,8 +729,9 @@ class UploadServerManager: ObservableObject {
                     statusDiv.innerHTML = '';
                     
                     Array.from(files).forEach((file, index) => {
-                        if (!file.name.toLowerCase().endsWith('.mp3')) {
-                            alert(file.name + ' is not an MP3 file');
+                        const name = file.name.toLowerCase();
+                        if (!name.endsWith('.mp3') && !name.endsWith('.m4a')) {
+                            alert(file.name + ' is not a supported audio file (MP3/M4A)');
                             return;
                         }
                         

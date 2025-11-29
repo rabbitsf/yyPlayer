@@ -196,7 +196,9 @@ class SimpleUploadServer: ObservableObject {
         
         var uploaded = 0
         for (filename, fileData) in files {
-            if !filename.lowercased().hasSuffix(".mp3") {
+            let lowercased = filename.lowercased()
+            // Only accept supported audio formats
+            if !(lowercased.hasSuffix(".mp3") || lowercased.hasSuffix(".m4a")) {
                 continue
             }
             
@@ -294,7 +296,7 @@ class SimpleUploadServer: ObservableObject {
         let html = """
         <!DOCTYPE html>
         <html>
-        <head><title>Upload MP3</title>
+        <head><title>Upload Music Files</title>
         <style>
         body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
         input, select, button { padding: 10px; margin: 10px 0; width: 100%; }
@@ -302,13 +304,13 @@ class SimpleUploadServer: ObservableObject {
         </style>
         </head>
         <body>
-        <h1>Upload MP3 Files</h1>
+        <h1>Upload Music Files (MP3/M4A)</h1>
         <form id="uploadForm" enctype="multipart/form-data">
         <select name="folder" required>
         <option value="">Select folder</option>
         \(foldersOptions)
         </select>
-        <input type="file" name="file" accept=".mp3" multiple required>
+        <input type="file" name="file" accept=".mp3,.m4a" multiple required>
         <button type="submit">Upload</button>
         </form>
         <div id="status"></div>

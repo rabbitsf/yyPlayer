@@ -32,7 +32,12 @@ class FileManagerHelper {
         let folderPath = getFolderPath(folder)
         do {
             let contents = try fileManager.contentsOfDirectory(atPath: folderPath)
-            return contents.filter { $0.hasSuffix(".mp3") } // Adjust for supported file types
+            // Support multiple audio formats (e.g. .mp3, .m4a)
+            let supportedExtensions: Set<String> = ["mp3", "m4a"]
+            return contents.filter { fileName in
+                let ext = (fileName as NSString).pathExtension.lowercased()
+                return supportedExtensions.contains(ext)
+            }
         } catch {
             print("Failed to get songs in folder \(folder): \(error)")
             return []
