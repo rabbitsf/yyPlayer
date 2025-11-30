@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct UploadView: View {
-    @StateObject private var serverManager = SimpleUploadServer.shared
+    @StateObject private var serverManager = WiFiUploadServer.shared
     @State private var ipAddress: String? = nil
     @State private var showIPAlert = false
     
@@ -18,6 +18,71 @@ struct UploadView: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
+            
+            // Decorative background elements
+            GeometryReader { geo in
+                Group {
+                    // Top area decorations
+                    Image(systemName: "wifi")
+                        .font(.system(size: 42))
+                        .foregroundColor(.white.opacity(0.1))
+                        .position(x: geo.size.width * 0.15, y: geo.size.height * 0.12)
+                    
+                    Image(systemName: "arrow.up.circle")
+                        .font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.12))
+                        .position(x: geo.size.width * 0.85, y: geo.size.height * 0.15)
+                    
+                    // Middle decorations
+                    Image(systemName: "network")
+                        .font(.system(size: 35))
+                        .foregroundColor(.white.opacity(0.09))
+                        .position(x: geo.size.width * 0.1, y: geo.size.height * 0.4)
+                    
+                    Image(systemName: "music.note")
+                        .font(.system(size: 32))
+                        .foregroundColor(.white.opacity(0.08))
+                        .position(x: geo.size.width * 0.9, y: geo.size.height * 0.45)
+                    
+                    // Bottom decorations
+                    Image(systemName: "server.rack")
+                        .font(.system(size: 38))
+                        .foregroundColor(.white.opacity(0.11))
+                        .position(x: geo.size.width * 0.12, y: geo.size.height * 0.7)
+                    
+                    Image(systemName: "icloud.and.arrow.up")
+                        .font(.system(size: 36))
+                        .foregroundColor(.white.opacity(0.1))
+                        .position(x: geo.size.width * 0.88, y: geo.size.height * 0.75)
+                    
+                    // Decorative dots
+                    ForEach(0..<8) { i in
+                        Circle()
+                            .fill(Color.white.opacity(0.05 + Double(i % 3) * 0.01))
+                            .frame(width: CGFloat(5 + i % 4), height: CGFloat(5 + i % 4))
+                            .position(
+                                x: geo.size.width * CGFloat([0.25, 0.75, 0.3, 0.7, 0.2, 0.8, 0.35, 0.65][i]),
+                                y: geo.size.height * CGFloat([0.22, 0.28, 0.52, 0.58, 0.82, 0.88, 0.35, 0.62][i])
+                            )
+                    }
+                }
+            }
+            
+            // Content frame
+            RoundedRectangle(cornerRadius: 25)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.2),
+                            Color.white.opacity(0.05),
+                            Color.white.opacity(0.15)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
+                .padding(15)
             
             VStack(spacing: 20) {
                 // IP Address Section

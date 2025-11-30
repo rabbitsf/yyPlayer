@@ -23,6 +23,102 @@ struct PlayerView: View {
             )
             .ignoresSafeArea()
             
+            // Decorative background elements
+            GeometryReader { geo in
+                Group {
+                    // Top area decorations
+                    Image(systemName: "music.quarternote.3")
+                        .font(.system(size: 45))
+                        .foregroundColor(.white.opacity(0.08))
+                        .position(x: geo.size.width * 0.12, y: geo.size.height * 0.12)
+                    
+                    Image(systemName: "music.note")
+                        .font(.system(size: 38))
+                        .foregroundColor(.white.opacity(0.1))
+                        .position(x: geo.size.width * 0.88, y: geo.size.height * 0.15)
+                }
+                
+                Group {
+                    // Middle upper decorations
+                    Image(systemName: "waveform.circle")
+                        .font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.09))
+                        .position(x: geo.size.width * 0.08, y: geo.size.height * 0.3)
+                    
+                    Image(systemName: "headphones.circle")
+                        .font(.system(size: 42))
+                        .foregroundColor(.white.opacity(0.1))
+                        .position(x: geo.size.width * 0.92, y: geo.size.height * 0.35)
+                }
+                
+                Group {
+                    // Middle decorations
+                    Image(systemName: "speaker.wave.2")
+                        .font(.system(size: 36))
+                        .foregroundColor(.white.opacity(0.08))
+                        .position(x: geo.size.width * 0.1, y: geo.size.height * 0.5)
+                    
+                    Image(systemName: "music.note.list")
+                        .font(.system(size: 34))
+                        .foregroundColor(.white.opacity(0.09))
+                        .position(x: geo.size.width * 0.9, y: geo.size.height * 0.55)
+                }
+                
+                Group {
+                    // Lower decorations
+                    Image(systemName: "play.circle")
+                        .font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.07))
+                        .position(x: geo.size.width * 0.12, y: geo.size.height * 0.72)
+                    
+                    Image(systemName: "guitars")
+                        .font(.system(size: 38))
+                        .foregroundColor(.white.opacity(0.08))
+                        .position(x: geo.size.width * 0.88, y: geo.size.height * 0.75)
+                }
+                
+                Group {
+                    // Bottom decorations
+                    Image(systemName: "pianokeys")
+                        .font(.system(size: 36))
+                        .foregroundColor(.white.opacity(0.09))
+                        .position(x: geo.size.width * 0.1, y: geo.size.height * 0.88)
+                    
+                    Image(systemName: "hifispeaker.2")
+                        .font(.system(size: 34))
+                        .foregroundColor(.white.opacity(0.08))
+                        .position(x: geo.size.width * 0.9, y: geo.size.height * 0.9)
+                }
+                
+                // Decorative dots
+                ForEach(0..<10) { i in
+                    Circle()
+                        .fill(Color.white.opacity(0.05 + Double(i % 3) * 0.01))
+                        .frame(width: CGFloat(5 + i % 4), height: CGFloat(5 + i % 4))
+                        .position(
+                            x: geo.size.width * CGFloat([0.25, 0.75, 0.3, 0.7, 0.2, 0.8, 0.35, 0.65, 0.28, 0.72][i]),
+                            y: geo.size.height * CGFloat([0.2, 0.25, 0.42, 0.48, 0.62, 0.68, 0.82, 0.85, 0.38, 0.58][i])
+                        )
+                }
+            }
+            
+            // Content frame
+            RoundedRectangle(cornerRadius: 25)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.2),
+                            Color.white.opacity(0.05),
+                            Color.white.opacity(0.15),
+                            Color.white.opacity(0.08)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
+                .padding(15)
+            
             VStack(spacing: 30) {
                 // Song Title
                 VStack(spacing: 8) {
@@ -251,6 +347,7 @@ struct PlayerView: View {
                 }
                 .padding(.bottom, 30)
             }
+            .padding(18)
         }
         .onAppear {
             if audioManager.currentSongTitle != initialSongName {

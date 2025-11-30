@@ -22,6 +22,70 @@ struct AirDropImportView: View {
             )
             .ignoresSafeArea()
             
+            // Decorative background elements
+            GeometryReader { geo in
+                Group {
+                    // Top area decorations
+                    Image(systemName: "arrow.down.circle")
+                        .font(.system(size: 45))
+                        .foregroundColor(.white.opacity(0.12))
+                        .position(x: geo.size.width * 0.15, y: geo.size.height * 0.15)
+                    
+                    Image(systemName: "folder.badge.plus")
+                        .font(.system(size: 38))
+                        .foregroundColor(.white.opacity(0.1))
+                        .position(x: geo.size.width * 0.85, y: geo.size.height * 0.18)
+                    
+                    // Middle decorations
+                    Image(systemName: "music.note")
+                        .font(.system(size: 30))
+                        .foregroundColor(.white.opacity(0.08))
+                        .position(x: geo.size.width * 0.12, y: geo.size.height * 0.45)
+                    
+                    Image(systemName: "doc.badge.plus")
+                        .font(.system(size: 35))
+                        .foregroundColor(.white.opacity(0.11))
+                        .position(x: geo.size.width * 0.88, y: geo.size.height * 0.5)
+                    
+                    // Bottom decorations
+                    Image(systemName: "music.note.list")
+                        .font(.system(size: 32))
+                        .foregroundColor(.white.opacity(0.09))
+                        .position(x: geo.size.width * 0.1, y: geo.size.height * 0.75)
+                    
+                    Image(systemName: "waveform")
+                        .font(.system(size: 36))
+                        .foregroundColor(.white.opacity(0.1))
+                        .position(x: geo.size.width * 0.9, y: geo.size.height * 0.78)
+                    
+                    // Decorative dots
+                    ForEach(0..<6) { i in
+                        Circle()
+                            .fill(Color.white.opacity(0.06))
+                            .frame(width: CGFloat(6 + i % 3), height: CGFloat(6 + i % 3))
+                            .position(
+                                x: geo.size.width * CGFloat([0.3, 0.7, 0.25, 0.75, 0.2, 0.8][i]),
+                                y: geo.size.height * CGFloat([0.25, 0.32, 0.55, 0.62, 0.85, 0.88][i])
+                            )
+                    }
+                }
+            }
+            
+            // Content frame
+            RoundedRectangle(cornerRadius: 25)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.25),
+                            Color.white.opacity(0.08)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
+                .padding(15)
+            
             VStack(spacing: 30) {
                 // Large circular light blue button with white download icon
                 Button(action: {}) {

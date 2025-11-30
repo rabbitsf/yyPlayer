@@ -17,6 +17,7 @@ class UploadServerManager: ObservableObject {
     private var connections: [NWConnection] = []
     private var requestBuffers: [ObjectIdentifier: Data] = [:]
     private var requestStartTimes: [ObjectIdentifier: Date] = [:]
+    private var lastDataReceivedTimes: [ObjectIdentifier: Date] = [:]
     
     private init() {}
     
@@ -61,6 +62,8 @@ class UploadServerManager: ObservableObject {
         connections.forEach { $0.cancel() }
         connections.removeAll()
         requestBuffers.removeAll()
+        requestStartTimes.removeAll()
+        lastDataReceivedTimes.removeAll()
         isServerRunning = false
     }
     
@@ -79,11 +82,13 @@ class UploadServerManager: ObservableObject {
                 self?.connections.removeAll { $0 === connection }
                 self?.requestBuffers.removeValue(forKey: connectionId)
                 self?.requestStartTimes.removeValue(forKey: connectionId)
+                self?.lastDataReceivedTimes.removeValue(forKey: connectionId)
             case .cancelled:
                 print("Connection cancelled: \(connectionId)")
                 self?.connections.removeAll { $0 === connection }
                 self?.requestBuffers.removeValue(forKey: connectionId)
                 self?.requestStartTimes.removeValue(forKey: connectionId)
+                self?.lastDataReceivedTimes.removeValue(forKey: connectionId)
             default:
                 break
             }
@@ -94,24 +99,34 @@ class UploadServerManager: ObservableObject {
     
     private func receiveData(on connection: NWConnection) {
         let connectionId = ObjectIdentifier(connection)
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 50 * 1024 * 1024) { [weak self] data, context, isComplete, error in
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, context, isComplete, error in
             guard let self = self else { return }
             
             if let error = error {
                 print("Receive error: \(error)")
                 self.requestBuffers.removeValue(forKey: connectionId)
                 self.requestStartTimes.removeValue(forKey: connectionId)
+                self.lastDataReceivedTimes.removeValue(forKey: connectionId)
                 return
             }
             
             let now = Date()
+            var receivedNewData = false
+            
             if let data = data, !data.isEmpty {
-                print("Received data chunk: \(data.count) bytes, isComplete: \(isComplete), connectionId: \(connectionId)")
+                receivedNewData = true
                 if self.requestBuffers[connectionId] == nil {
                     self.requestBuffers[connectionId] = Data()
                     self.requestStartTimes[connectionId] = now
                 }
                 self.requestBuffers[connectionId]?.append(data)
+                self.lastDataReceivedTimes[connectionId] = now
+                
+                // Only log occasionally to reduce spam
+                let bufferedData = self.requestBuffers[connectionId] ?? Data()
+                if bufferedData.count % 500000 < 65536 {
+                    print("Received data chunk: \(data.count) bytes, total: \(bufferedData.count) bytes")
+                }
             }
             
             let bufferedData = self.requestBuffers[connectionId] ?? Data()
@@ -122,10 +137,11 @@ class UploadServerManager: ObservableObject {
             if isComplete {
                 // Connection complete, process whatever we have
                 if !bufferedData.isEmpty {
-                    print("Connection complete, processing request, size: \(bufferedData.count) bytes")
+                    print("✅ Connection complete, processing request, size: \(bufferedData.count) bytes")
                     self.processRequest(data: bufferedData, connection: connection)
                     self.requestBuffers.removeValue(forKey: connectionId)
                     self.requestStartTimes.removeValue(forKey: connectionId)
+                    self.lastDataReceivedTimes.removeValue(forKey: connectionId)
                 }
             } else if hasHeaders {
                 // Check if it's a GET request (can process immediately) or POST (need full body)
@@ -135,24 +151,43 @@ class UploadServerManager: ObservableObject {
                     self.processRequest(data: bufferedData, connection: connection)
                     self.requestBuffers.removeValue(forKey: connectionId)
                     self.requestStartTimes.removeValue(forKey: connectionId)
+                    self.lastDataReceivedTimes.removeValue(forKey: connectionId)
                 } else {
                     // POST request - check if we have the complete body
+                    
+                    // Log once when we first detect it's a POST
+                    if bufferedData.count < 100000 {
+                        if let preview = String(data: bufferedData.prefix(200), encoding: .utf8) {
+                            print("🔵 Detected POST request: \(preview.components(separatedBy: "\r\n").first ?? "unknown")")
+                        }
+                    }
+                    
                     let hasCompleteBody = self.hasCompletePostBody(bufferedData)
                     let timeSinceStart = self.requestStartTimes[connectionId].map { now.timeIntervalSince($0) } ?? 0
-                    let hasSubstantialData = bufferedData.count > 50000
-                    let timeoutReached = timeSinceStart > 3.0 // 3 second timeout
+                    let timeSinceLastData = self.lastDataReceivedTimes[connectionId].map { now.timeIntervalSince($0) } ?? 0
                     
-                    print("POST request detected - hasCompleteBody: \(hasCompleteBody), size: \(bufferedData.count), timeSinceStart: \(String(format: "%.2f", timeSinceStart))s, timeoutReached: \(timeoutReached)")
+                    // Safety mechanism: if no new data has arrived for 2 seconds and we have substantial data, process it
+                    let hasSubstantialData = bufferedData.count > 10000
+                    let idleTimeout = timeSinceLastData > 2.0 && hasSubstantialData && !receivedNewData
                     
-                    if hasCompleteBody || (hasSubstantialData && timeoutReached) {
-                        let reason = hasCompleteBody ? "complete body detected" : "timeout with substantial data"
-                        print("Processing POST request (\(reason)), size: \(bufferedData.count) bytes")
+                    if hasCompleteBody {
+                        print("✅ Processing POST request (complete body detected), size: \(bufferedData.count) bytes")
                         self.processRequest(data: bufferedData, connection: connection)
                         self.requestBuffers.removeValue(forKey: connectionId)
                         self.requestStartTimes.removeValue(forKey: connectionId)
+                        self.lastDataReceivedTimes.removeValue(forKey: connectionId)
+                    } else if idleTimeout {
+                        print("⏰ Processing POST request (idle timeout - no data for \(String(format: "%.1f", timeSinceLastData))s), size: \(bufferedData.count) bytes")
+                        self.processRequest(data: bufferedData, connection: connection)
+                        self.requestBuffers.removeValue(forKey: connectionId)
+                        self.requestStartTimes.removeValue(forKey: connectionId)
+                        self.lastDataReceivedTimes.removeValue(forKey: connectionId)
                     } else {
                         // Continue receiving
-                        print("Waiting for more POST data...")
+                        // Only log occasionally
+                        if bufferedData.count % 500000 < 65536 {
+                            print("⏳ Waiting for more POST data... (current size: \(bufferedData.count), time elapsed: \(String(format: "%.2f", timeSinceStart))s, idle: \(String(format: "%.2f", timeSinceLastData))s)")
+                        }
                         self.receiveData(on: connection)
                     }
                 }
@@ -167,8 +202,18 @@ class UploadServerManager: ObservableObject {
         // Parse HTTP request
         print("=== Processing request, total size: \(data.count) bytes ===")
         
-        guard let requestString = String(data: data.prefix(min(2048, data.count)), encoding: .utf8) else {
-            print("Failed to decode request as UTF-8")
+        // Find the header end first
+        let doubleCRLF = "\r\n\r\n".data(using: .utf8)!
+        guard let headerEndRange = data.range(of: doubleCRLF) else {
+            print("No header end marker found")
+            sendErrorResponse(connection: connection, message: "Invalid request")
+            return
+        }
+        
+        // Only decode the headers (before the binary body)
+        let headerData = data[..<headerEndRange.lowerBound]
+        guard let requestString = String(data: headerData, encoding: .utf8) else {
+            print("Failed to decode headers as UTF-8")
             sendErrorResponse(connection: connection, message: "Invalid request")
             return
         }
@@ -377,11 +422,16 @@ class UploadServerManager: ObservableObject {
     }
     
     private func hasCompletePostBody(_ data: Data) -> Bool {
-        // Check if this is a multipart POST and if we have the final boundary
+        // First, always check Content-Length as it's the most reliable
+        if checkContentLength(data: data) {
+            return true
+        }
+        
+        // If no Content-Length or it doesn't match yet, check for multipart boundary completion
         guard let preview = String(data: data.prefix(min(2048, data.count)), encoding: .utf8),
               preview.contains("POST ") && preview.contains("multipart/form-data") else {
-            // Not multipart, check Content-Length
-            return checkContentLength(data: data)
+            // Not multipart and no valid Content-Length
+            return false
         }
         
         // Extract boundary
@@ -389,23 +439,35 @@ class UploadServerManager: ObservableObject {
             return false
         }
         
-        // Check for final boundary marker
-        let finalBoundary = ("\r\n" + boundary + "--\r\n").data(using: .utf8)!
-        let finalBoundaryAlt = (boundary + "--\r\n").data(using: .utf8)!
+        // Check for final boundary marker - it can appear in various formats:
+        // 1. \r\n--boundary--\r\n
+        // 2. --boundary--\r\n
+        // 3. \r\n--boundary--
+        // 4. --boundary--
+        let finalBoundary1 = ("\r\n" + boundary + "--\r\n").data(using: .utf8)!
+        let finalBoundary2 = ("\r\n" + boundary + "--").data(using: .utf8)!
+        let finalBoundary3 = (boundary + "--\r\n").data(using: .utf8)!
+        let finalBoundary4 = (boundary + "--").data(using: .utf8)!
         
-        // Check in the last 500 bytes
-        if data.count > 500 {
-            let tail = data.suffix(500)
-            if tail.range(of: finalBoundary) != nil || tail.range(of: finalBoundaryAlt) != nil {
-                print("Found final boundary marker")
+        // Check in the last 1000 bytes for any of these patterns
+        let searchLength = min(1000, data.count)
+        if data.count > 0 {
+            let tail = data.suffix(searchLength)
+            
+            if tail.range(of: finalBoundary1) != nil {
+                print("Found final boundary marker (format 1)")
                 return true
             }
-        }
-        
-        // Also check if data ends with the final boundary
-        if data.count >= finalBoundaryAlt.count {
-            if data.suffix(finalBoundaryAlt.count) == finalBoundaryAlt {
-                print("Found final boundary at end")
+            if tail.range(of: finalBoundary2) != nil {
+                print("Found final boundary marker (format 2)")
+                return true
+            }
+            if tail.range(of: finalBoundary3) != nil {
+                print("Found final boundary marker (format 3)")
+                return true
+            }
+            if tail.range(of: finalBoundary4) != nil {
+                print("Found final boundary marker (format 4)")
                 return true
             }
         }
@@ -413,27 +475,56 @@ class UploadServerManager: ObservableObject {
         return false
     }
     
+    private var loggedContentLengthInfo: Set<Int> = []
+    
     private func checkContentLength(data: Data) -> Bool {
         guard let headerString = String(data: data.prefix(min(2048, data.count)), encoding: .utf8) else {
             return false
         }
         
+        // Find where headers end
+        guard let headerEndRange = headerString.range(of: "\r\n\r\n") else {
+            return false
+        }
+        
+        let headerLength = headerString.distance(from: headerString.startIndex, to: headerEndRange.upperBound)
+        
+        // Look for Content-Length header
         let lines = headerString.components(separatedBy: "\r\n")
+        var foundContentLength = false
         for line in lines {
             if line.lowercased().hasPrefix("content-length:") {
+                foundContentLength = true
                 let parts = line.components(separatedBy: ":")
                 if parts.count > 1, let contentLength = Int(parts[1].trimmingCharacters(in: .whitespacesAndNewlines)) {
-                    if let bodyStart = headerString.range(of: "\r\n\r\n") {
-                        let headerLength = headerString.distance(from: headerString.startIndex, to: bodyStart.upperBound)
-                        let expectedTotal = headerLength + contentLength
-                        let hasEnough = data.count >= expectedTotal
-                        if hasEnough {
-                            print("Content-Length satisfied: \(data.count) >= \(expectedTotal)")
-                        }
-                        return hasEnough
+                    let expectedTotal = headerLength + contentLength
+                    let hasEnough = data.count >= expectedTotal
+                    
+                    // Log once when we find Content-Length
+                    if !self.loggedContentLengthInfo.contains(contentLength) {
+                        print("📊 Content-Length header found: \(contentLength) bytes (+ \(headerLength) header bytes = \(expectedTotal) total)")
+                        self.loggedContentLengthInfo.insert(contentLength)
                     }
+                    
+                    // Log progress for large uploads
+                    if !hasEnough && contentLength > 100000 {
+                        let progress = Int((Double(data.count - headerLength) / Double(contentLength)) * 100)
+                        // Log every 20% 
+                        if progress % 20 == 0 && progress > 0 {
+                            print("📈 Upload progress: \(progress)% (\(data.count - headerLength)/\(contentLength) bytes)")
+                        }
+                    } else if hasEnough {
+                        print("✅ Content-Length satisfied: \(data.count) >= \(expectedTotal) bytes")
+                        self.loggedContentLengthInfo.remove(contentLength) // Reset for next upload
+                    }
+                    
+                    return hasEnough
                 }
             }
+        }
+        
+        if !foundContentLength && data.count > headerLength && data.count < headerLength + 1000 {
+            print("⚠️ No Content-Length header found in request")
         }
         
         return false
@@ -604,6 +695,7 @@ class UploadServerManager: ObservableObject {
                 // Reset buffer for potential next request on same connection
                 self.requestBuffers.removeValue(forKey: connectionId)
                 self.requestStartTimes.removeValue(forKey: connectionId)
+                self.lastDataReceivedTimes.removeValue(forKey: connectionId)
                 // Continue receiving
                 self.receiveData(on: connection)
             }
