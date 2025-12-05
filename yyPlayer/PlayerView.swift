@@ -7,6 +7,7 @@ struct PlayerView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var currentTime: Double = 0
     @State private var duration: Double = 0
+    @State private var progressTimer: Timer? = nil
 
     var body: some View {
         ZStack {
@@ -364,13 +365,23 @@ struct PlayerView: View {
             updateSongDetails()
             startUpdatingProgress()
         }
+        .onDisappear {
+            // CRITICAL: Stop the progress timer when view disappears
+            progressTimer?.invalidate()
+            progressTimer = nil
+        }
         .onChange(of: audioManager.currentSongTitle) { _ in
             updateSongDetails()
         }
     }
 
     private func startUpdatingProgress() {
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+        // CRITICAL: Invalidate any existing timer first
+        progressTimer?.invalidate()
+        progressTimer = nil
+        
+        // Create new timer and store reference
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [self] _ in
             currentTime = audioManager.getCurrentTime()
         }
     }
