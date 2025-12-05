@@ -33,53 +33,61 @@ struct EqualizerView: View {
 
 struct EqualizerCircleView: View {
     let levels: [CGFloat]
-    let barCount: Int = 24
+    let barCount: Int = 32
     
     var body: some View {
+        let avgLevel = levels.reduce(0, +) / CGFloat(levels.count)
+        
         ZStack {
-            // Animated pulsing glow circles
-            ForEach(0..<3) { ring in
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.cyan.opacity(0.4),
-                                Color.blue.opacity(0.3),
-                                Color.purple.opacity(0.2)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 2
-                    )
-                    .frame(width: 140 + CGFloat(ring) * 30, height: 140 + CGFloat(ring) * 30)
-                    .opacity(0.3 - Double(ring) * 0.1)
-            }
-            
-            // Outer glow circle - more intense
+            // INTENSE pulsing outer glow that explodes with the music
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            Color.cyan.opacity(0.5),
-                            Color.blue.opacity(0.3),
-                            Color.purple.opacity(0.1),
+                            Color.cyan.opacity(0.6 + avgLevel * 0.4),
+                            Color.blue.opacity(0.4 + avgLevel * 0.3),
+                            Color.purple.opacity(0.2 + avgLevel * 0.2),
                             Color.clear
                         ]),
                         center: .center,
-                        startRadius: 40,
-                        endRadius: 120
+                        startRadius: 30,
+                        endRadius: 140
                     )
                 )
-                .frame(width: 240, height: 240)
+                .frame(width: 280, height: 280)
+                .scaleEffect(1.0 + avgLevel * 0.5) // HUGE pulse with music
+                .animation(.easeOut(duration: 0.1), value: avgLevel)
             
-            // Circular bars - bigger and more dramatic
+            // Multiple animated rings that pulse
+            ForEach(0..<4) { ring in
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.cyan.opacity(0.6 - Double(ring) * 0.15),
+                                Color.blue.opacity(0.5 - Double(ring) * 0.12),
+                                Color.purple.opacity(0.4 - Double(ring) * 0.1)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 3
+                    )
+                    .frame(width: 130 + CGFloat(ring) * 35, height: 130 + CGFloat(ring) * 35)
+                    .scaleEffect(1.0 + avgLevel * CGFloat(0.3 - Double(ring) * 0.05))
+                    .opacity(0.5 - Double(ring) * 0.1)
+                    .animation(.easeOut(duration: 0.1), value: avgLevel)
+            }
+            
+            // MASSIVE circular bars - tripled height range!
             ForEach(0..<barCount, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 3)
+                let level = getLevelForBar(index)
+                
+                RoundedRectangle(cornerRadius: 4)
                     .fill(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                Color.cyan,
+                                Color.cyan.opacity(0.8 + level * 0.2),
                                 Color.blue,
                                 Color.purple
                             ]),
@@ -87,48 +95,56 @@ struct EqualizerCircleView: View {
                             endPoint: .top
                         )
                     )
-                    .frame(width: 5, height: 20 + getLevelForBar(index) * 50) // Doubled height range
-                    .offset(y: -60)
+                    .frame(width: 6, height: 15 + level * 80) // TRIPLED from 50 to 80!
+                    .offset(y: -65)
                     .rotationEffect(.degrees(Double(index) * (360.0 / Double(barCount))))
-                    .shadow(color: Color.cyan.opacity(0.8), radius: 5, x: 0, y: 0)
-                    .shadow(color: Color.blue.opacity(0.6), radius: 8, x: 0, y: 0) // Double shadow for glow
-                    .animation(.spring(response: 0.2, dampingFraction: 0.5), value: getLevelForBar(index)) // Faster response
+                    .shadow(color: Color.cyan.opacity(1.0), radius: 8, x: 0, y: 0)
+                    .shadow(color: Color.blue.opacity(0.8), radius: 12, x: 0, y: 0)
+                    .shadow(color: Color.purple.opacity(0.6), radius: 16, x: 0, y: 0) // Triple shadow!
+                    .animation(.easeOut(duration: 0.08), value: level) // INSTANT response!
             }
             
-            // Pulsing center circle background
+            // EXPLOSIVE center pulse
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            Color.blue.opacity(0.3),
-                            Color.purple.opacity(0.2),
+                            Color.cyan.opacity(0.5 + avgLevel * 0.5),
+                            Color.blue.opacity(0.4 + avgLevel * 0.4),
+                            Color.purple.opacity(0.3 + avgLevel * 0.3),
                             Color.clear
                         ]),
                         center: .center,
                         startRadius: 0,
-                        endRadius: 50
+                        endRadius: 60
                     )
                 )
-                .frame(width: 100, height: 100)
-                .scaleEffect(1.0 + (levels.reduce(0, +) / CGFloat(levels.count)) * 0.3) // Pulse with music
-                .animation(.easeInOut(duration: 0.2), value: levels)
+                .frame(width: 120, height: 120)
+                .scaleEffect(0.8 + avgLevel * 0.6) // HUGE center pulse
+                .animation(.easeOut(duration: 0.1), value: avgLevel)
             
-            // Center icon with pulsing effect
+            // Center icon with MASSIVE pulsing
             Image(systemName: "music.note")
-                .font(.system(size: 50))
+                .font(.system(size: 55))
                 .foregroundStyle(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color.cyan, Color.blue, Color.purple]),
+                        gradient: Gradient(colors: [
+                            Color.white,
+                            Color.cyan,
+                            Color.blue
+                        ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: Color.cyan.opacity(0.8), radius: 15, x: 0, y: 5)
-                .shadow(color: Color.blue.opacity(0.6), radius: 20, x: 0, y: 5)
-                .scaleEffect(1.0 + (levels.reduce(0, +) / CGFloat(levels.count)) * 0.2) // Slight pulse
-                .animation(.easeInOut(duration: 0.2), value: levels)
+                .shadow(color: Color.cyan, radius: 20, x: 0, y: 0)
+                .shadow(color: Color.blue, radius: 30, x: 0, y: 0)
+                .shadow(color: Color.purple, radius: 40, x: 0, y: 0)
+                .scaleEffect(0.9 + avgLevel * 0.5) // HUGE icon pulse
+                .rotationEffect(.degrees(avgLevel * 10)) // Slight rotation with music!
+                .animation(.easeOut(duration: 0.1), value: avgLevel)
         }
-        .frame(width: 240, height: 240)
+        .frame(width: 280, height: 280)
     }
     
     private func getLevelForBar(_ index: Int) -> CGFloat {

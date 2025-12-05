@@ -145,7 +145,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     private func startMeteringTimer() {
-        Timer.scheduledTimer(withTimeInterval: 0.03, repeats: true) { [weak self] timer in
+        Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] timer in
             guard let self = self, let player = self.player, self.isPlaying else {
                 timer.invalidate()
                 return
@@ -153,33 +153,25 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             
             player.updateMeters()
             
-            // Use peak power for more dramatic, responsive effect
+            // Use ONLY peak power for maximum dramatic effect - no averaging!
             let peakPower0 = player.peakPower(forChannel: 0)
             let peakPower1 = player.numberOfChannels > 1 ? player.peakPower(forChannel: 1) : peakPower0
             let maxPeak = max(peakPower0, peakPower1)
             
-            // Also get average for smoothing
-            let avgPower = (player.averagePower(forChannel: 0) + (player.numberOfChannels > 1 ? player.averagePower(forChannel: 1) : player.averagePower(forChannel: 0))) / 2.0
+            // Much more aggressive sensitivity range (-30 to 0 dB for extreme response)
+            let normalizedLevel = max(0.0, min(1.0, (maxPeak + 30) / 30))
             
-            // Combine peak and average for dramatic yet smooth effect
-            let combinedPower = (maxPeak * 0.7) + (avgPower * 0.3)
+            // More aggressive power curve for explosive movement
+            let boostedLevel = pow(normalizedLevel, 0.5)
             
-            // Convert decibels to 0-1 scale with increased sensitivity
-            // Adjusted range for more dramatic movement (from -40 to 0 dB)
-            let normalizedLevel = max(0.0, min(1.0, (combinedPower + 40) / 40))
-            
-            // Boost the level for more dramatic effect
-            let boostedLevel = pow(normalizedLevel, 0.7) // Power curve for more dramatic range
-            
-            // Create varied bar heights with more randomness for visual appeal
+            // Create varied bar heights with HUGE variance and NO smoothing
             DispatchQueue.main.async {
                 self.audioLevels = (0..<8).map { index in
-                    // More variance between bars
-                    let variance = CGFloat.random(in: 0.5...1.5)
+                    // Extreme variance between bars
+                    let variance = CGFloat.random(in: 0.3...1.7)
                     let baseLevel = CGFloat(boostedLevel) * variance
-                    // Less smoothing for more responsive movement
-                    let smoothed = self.audioLevels[index] * 0.5 + baseLevel * 0.5
-                    return max(0.15, min(1.0, smoothed))
+                    // NO smoothing - instant reaction!
+                    return max(0.2, min(1.0, baseLevel))
                 }
             }
         }
