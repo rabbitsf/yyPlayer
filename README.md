@@ -32,6 +32,7 @@ Upload music and videos directly from your computer via web browser:
 
 ### 🎛️ Advanced Media Player
 - **Dual player support**: Separate audio player and video player
+- **Circular audio visualizer** - Beautiful animated equalizer that responds to music rhythm
 - **Full playback controls**: Play, Pause, Next, Previous
 - **Seek bar** with time display (elapsed/remaining)
 - **Repeat modes**: Repeat One, Repeat All
@@ -101,7 +102,7 @@ Upload music and videos directly from your computer via web browser:
 #### Playing Media
 1. Tap a folder to view its contents
 2. Tap an audio file (🎵) or video file (🎬) to start playing
-3. **Audio files** open the audio player with album art visualization
+3. **Audio files** open the audio player with stunning circular equalizer visualization
 4. **Video files** open the video player with embedded video display
 5. Use the player controls:
    - **Play/Pause** (large center button)
@@ -138,7 +139,8 @@ Upload music and videos directly from your computer via web browser:
 
 ## 🛠️ Technical Details
 - Built with **SwiftUI** for iOS
-- Uses **AVAudioPlayer** for audio playback
+- Uses **AVAudioPlayer** for audio playback with real-time metering
+- **Real-time audio visualization** with 32-bar circular equalizer
 - Uses **AVPlayer** and **AVKit** for video playback
 - **Network framework** for WiFi upload server
 - **FileManager** for local file operations
@@ -156,6 +158,7 @@ Upload music and videos directly from your computer via web browser:
 - **Screen won't auto-lock** while upload server is running - perfect for long uploads
 - Video files are automatically identified with a film icon 🎬
 - Audio files show a music note icon 🎵
+- **Watch the circular equalizer** dance with your music's rhythm while playing audio
 - **Tap full-screen button** in video player to watch in landscape mode
 - **Rotate your device** to landscape for better video viewing experience
 
