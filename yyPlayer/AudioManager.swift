@@ -166,15 +166,19 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             // More aggressive power curve for explosive movement
             let boostedLevel = pow(normalizedLevel, 0.5)
             
-            // Create varied bar heights with HUGE variance and NO smoothing
+            // Create varied bar heights with smoothing for graceful movement
             DispatchQueue.main.async {
-                self.audioLevels = (0..<8).map { index in
-                    // Extreme variance between bars
-                    let variance = CGFloat.random(in: 0.3...1.7)
+                let newLevels = (0..<8).map { index -> CGFloat in
+                    // Variance between bars
+                    let variance = CGFloat.random(in: 0.5...1.5)
                     let baseLevel = CGFloat(boostedLevel) * variance
-                    // NO smoothing - instant reaction!
-                    return max(0.2, min(1.0, baseLevel))
+                    let targetLevel = max(0.2, min(1.0, baseLevel))
+                    
+                    // Smooth transition - 70% old + 30% new
+                    let smoothed = self.audioLevels[index] * 0.7 + targetLevel * 0.3
+                    return smoothed
                 }
+                self.audioLevels = newLevels
                 
                 // Smooth single level for waveform - much heavier smoothing
                 let targetLevel = CGFloat(boostedLevel) * 0.8 + 0.2 // Range 0.2-1.0
