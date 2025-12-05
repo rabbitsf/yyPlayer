@@ -122,9 +122,9 @@ struct PlayerView: View {
             VStack(spacing: 30) {
                 // Song Title with Equalizer
                 VStack(spacing: 15) {
-                    // Siri-style Waveform
+                    // Pulsing Circle Visualizer
                     if audioManager.isPlaying {
-                        SiriWaveformView(audioLevel: audioManager.smoothedAudioLevel)
+                        PulsingCircleView(audioLevel: audioManager.smoothedAudioLevel)
                             .padding(.top, 30)
                     } else {
                         Image(systemName: "music.note")

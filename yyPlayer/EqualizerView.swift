@@ -136,92 +136,87 @@ struct EqualizerView: View {
     }
 }
 
-struct SiriWaveformView: View {
+struct PulsingCircleView: View {
     let audioLevel: CGFloat
-    @State private var phase: Double = 0
+    @State private var rotation: Double = 0
+    
+    private let dotCount = 60
+    private let radius: CGFloat = 100
     
     var body: some View {
         ZStack {
-            // Outer glow effect
-            Ellipse()
+            // Outer glow
+            Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            Color.cyan.opacity(0.3 + audioLevel * 0.2),
-                            Color.blue.opacity(0.2 + audioLevel * 0.15),
+                            Color.cyan.opacity(0.2 + audioLevel * 0.3),
+                            Color.blue.opacity(0.15 + audioLevel * 0.2),
                             Color.clear
                         ]),
                         center: .center,
                         startRadius: 50,
-                        endRadius: 150
+                        endRadius: 140
                     )
                 )
-                .frame(width: 300, height: 200)
-                .blur(radius: 30)
+                .frame(width: 280, height: 280)
+                .blur(radius: 40)
             
-            // Multiple wave layers for depth
-            ForEach(0..<5) { layer in
-                SmoothWavePath(
-                    audioLevel: audioLevel,
-                    phase: phase + Double(layer) * 0.5,
-                    amplitude: 1.0 - Double(layer) * 0.15,
-                    frequency: 2.0 + Double(layer) * 0.5
-                )
-                .stroke(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color.cyan.opacity(0.8 - Double(layer) * 0.15),
-                            Color.blue.opacity(0.9 - Double(layer) * 0.15),
-                            Color.purple.opacity(0.8 - Double(layer) * 0.15)
-                        ]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    style: StrokeStyle(
-                        lineWidth: CGFloat(6 - layer),
-                        lineCap: .round,
-                        lineJoin: .round
+            // Animated dots forming a circle
+            ForEach(0..<dotCount, id: \.self) { index in
+                let angle = Double(index) * (360.0 / Double(dotCount))
+                let adjustedAngle = angle + rotation
+                
+                // Calculate wave effect that travels around the circle
+                let wavePhase = (adjustedAngle / 360.0) * 2 * .pi
+                let waveAmplitude = sin(wavePhase * 3) * 0.3 + 1.0
+                
+                // Audio-reactive sizing
+                let dotSize = (4.0 + audioLevel * 6.0) * waveAmplitude
+                
+                // Audio-reactive opacity
+                let dotOpacity = 0.3 + audioLevel * 0.5 + waveAmplitude * 0.2
+                
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.cyan,
+                                Color.blue
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .frame(width: 280, height: 150)
-                .shadow(color: Color.cyan.opacity(0.6), radius: 15)
-                .shadow(color: Color.blue.opacity(0.4), radius: 25)
-                .opacity(0.9 - Double(layer) * 0.1)
+                    .frame(width: dotSize, height: dotSize)
+                    .offset(y: -radius)
+                    .rotationEffect(.degrees(adjustedAngle))
+                    .opacity(dotOpacity)
+                    .shadow(color: Color.cyan.opacity(0.8), radius: 4)
             }
             
-            // Mirrored waves for symmetry
-            ForEach(0..<5) { layer in
-                SmoothWavePath(
-                    audioLevel: audioLevel,
-                    phase: phase + Double(layer) * 0.5,
-                    amplitude: 1.0 - Double(layer) * 0.15,
-                    frequency: 2.0 + Double(layer) * 0.5
-                )
-                .stroke(
+            // Center music icon
+            Image(systemName: "music.note")
+                .font(.system(size: 60))
+                .foregroundStyle(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color.cyan.opacity(0.5 - Double(layer) * 0.1),
-                            Color.blue.opacity(0.6 - Double(layer) * 0.1),
-                            Color.purple.opacity(0.5 - Double(layer) * 0.1)
+                            Color.cyan,
+                            Color.blue,
+                            Color.purple
                         ]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    style: StrokeStyle(
-                        lineWidth: CGFloat(6 - layer),
-                        lineCap: .round,
-                        lineJoin: .round
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 280, height: 150)
-                .scaleEffect(x: 1, y: -1)
-                .opacity(0.6 - Double(layer) * 0.08)
-            }
+                .shadow(color: Color.cyan.opacity(0.8), radius: 20)
+                .shadow(color: Color.blue.opacity(0.6), radius: 30)
+                .scaleEffect(0.9 + audioLevel * 0.3)
         }
-        .frame(width: 300, height: 200)
+        .frame(width: 280, height: 280)
         .onAppear {
-            withAnimation(.linear(duration: 3).repeatForever(autoreverses: false)) {
-                phase = .pi * 2
+            withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
+                rotation = 360
             }
         }
     }
