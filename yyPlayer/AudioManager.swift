@@ -22,6 +22,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var shuffledIndices: [Int] = [] // Tracks shuffled order
     private var shufflePosition: Int = 0 // Current position in shuffled array
     @Published var audioLevels: [CGFloat] = Array(repeating: 0.1, count: 8) // Audio levels for equalizer
+    @Published var smoothedAudioLevel: CGFloat = 0.3 // Single smoothed level for waveform
     
     func toggleRepeatOne() {
         repeatMode = repeatMode == .repeatOne ? .none : .repeatOne
@@ -142,6 +143,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         player?.stop()
         isPlaying = false
         audioLevels = Array(repeating: 0.1, count: 8) // Reset levels
+        smoothedAudioLevel = 0.3 // Reset smoothed level
     }
     
     private func startMeteringTimer() {
@@ -173,6 +175,10 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
                     // NO smoothing - instant reaction!
                     return max(0.2, min(1.0, baseLevel))
                 }
+                
+                // Smooth single level for waveform - much heavier smoothing
+                let targetLevel = CGFloat(boostedLevel) * 0.8 + 0.2 // Range 0.2-1.0
+                self.smoothedAudioLevel = self.smoothedAudioLevel * 0.85 + targetLevel * 0.15 // Heavy smoothing
             }
         }
     }

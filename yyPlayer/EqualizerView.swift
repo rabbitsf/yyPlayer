@@ -137,20 +137,18 @@ struct EqualizerView: View {
 }
 
 struct SiriWaveformView: View {
-    let levels: [CGFloat]
+    let audioLevel: CGFloat
     @State private var phase: Double = 0
     
     var body: some View {
-        let avgLevel = levels.reduce(0, +) / CGFloat(levels.count)
-        
         ZStack {
             // Outer glow effect
             Ellipse()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            Color.cyan.opacity(0.3 + avgLevel * 0.3),
-                            Color.blue.opacity(0.2 + avgLevel * 0.2),
+                            Color.cyan.opacity(0.3 + audioLevel * 0.2),
+                            Color.blue.opacity(0.2 + audioLevel * 0.15),
                             Color.clear
                         ]),
                         center: .center,
@@ -160,60 +158,69 @@ struct SiriWaveformView: View {
                 )
                 .frame(width: 300, height: 200)
                 .blur(radius: 30)
-                .animation(.easeOut(duration: 0.1), value: avgLevel)
             
             // Multiple wave layers for depth
             ForEach(0..<5) { layer in
-                SmoothWavePath(levels: levels, phase: phase + Double(layer) * 0.5, amplitude: 1.0 - Double(layer) * 0.15)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.cyan.opacity(0.8 - Double(layer) * 0.15),
-                                Color.blue.opacity(0.9 - Double(layer) * 0.15),
-                                Color.purple.opacity(0.8 - Double(layer) * 0.15)
-                            ]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        style: StrokeStyle(
-                            lineWidth: CGFloat(6 - layer),
-                            lineCap: .round,
-                            lineJoin: .round
-                        )
+                SmoothWavePath(
+                    audioLevel: audioLevel,
+                    phase: phase + Double(layer) * 0.5,
+                    amplitude: 1.0 - Double(layer) * 0.15,
+                    frequency: 2.0 + Double(layer) * 0.5
+                )
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.cyan.opacity(0.8 - Double(layer) * 0.15),
+                            Color.blue.opacity(0.9 - Double(layer) * 0.15),
+                            Color.purple.opacity(0.8 - Double(layer) * 0.15)
+                        ]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: StrokeStyle(
+                        lineWidth: CGFloat(6 - layer),
+                        lineCap: .round,
+                        lineJoin: .round
                     )
-                    .frame(width: 280, height: 150)
-                    .shadow(color: Color.cyan.opacity(0.6), radius: 15)
-                    .shadow(color: Color.blue.opacity(0.4), radius: 25)
-                    .opacity(0.9 - Double(layer) * 0.1)
+                )
+                .frame(width: 280, height: 150)
+                .shadow(color: Color.cyan.opacity(0.6), radius: 15)
+                .shadow(color: Color.blue.opacity(0.4), radius: 25)
+                .opacity(0.9 - Double(layer) * 0.1)
             }
             
             // Mirrored waves for symmetry
             ForEach(0..<5) { layer in
-                SmoothWavePath(levels: levels, phase: phase + Double(layer) * 0.5, amplitude: 1.0 - Double(layer) * 0.15)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.cyan.opacity(0.5 - Double(layer) * 0.1),
-                                Color.blue.opacity(0.6 - Double(layer) * 0.1),
-                                Color.purple.opacity(0.5 - Double(layer) * 0.1)
-                            ]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        style: StrokeStyle(
-                            lineWidth: CGFloat(6 - layer),
-                            lineCap: .round,
-                            lineJoin: .round
-                        )
+                SmoothWavePath(
+                    audioLevel: audioLevel,
+                    phase: phase + Double(layer) * 0.5,
+                    amplitude: 1.0 - Double(layer) * 0.15,
+                    frequency: 2.0 + Double(layer) * 0.5
+                )
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.cyan.opacity(0.5 - Double(layer) * 0.1),
+                            Color.blue.opacity(0.6 - Double(layer) * 0.1),
+                            Color.purple.opacity(0.5 - Double(layer) * 0.1)
+                        ]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: StrokeStyle(
+                        lineWidth: CGFloat(6 - layer),
+                        lineCap: .round,
+                        lineJoin: .round
                     )
-                    .frame(width: 280, height: 150)
-                    .scaleEffect(x: 1, y: -1)
-                    .opacity(0.6 - Double(layer) * 0.08)
+                )
+                .frame(width: 280, height: 150)
+                .scaleEffect(x: 1, y: -1)
+                .opacity(0.6 - Double(layer) * 0.08)
             }
         }
         .frame(width: 300, height: 200)
         .onAppear {
-            withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
+            withAnimation(.linear(duration: 3).repeatForever(autoreverses: false)) {
                 phase = .pi * 2
             }
         }
@@ -221,9 +228,10 @@ struct SiriWaveformView: View {
 }
 
 struct SmoothWavePath: Shape {
-    let levels: [CGFloat]
+    let audioLevel: CGFloat
     let phase: Double
     let amplitude: Double
+    let frequency: Double
     
     var animatableData: Double {
         get { phase }
@@ -236,36 +244,36 @@ struct SmoothWavePath: Shape {
         let height = rect.height
         let midHeight = height / 2
         
-        let pointCount = 80
+        let pointCount = 100
         let segmentWidth = width / CGFloat(pointCount - 1)
         
+        // Create continuous smooth wave
         for i in 0..<pointCount {
             let x = CGFloat(i) * segmentWidth
-            let progress = Double(i) / Double(pointCount)
+            let progress = Double(i) / Double(pointCount - 1)
             
-            // Get audio level for this point
-            let levelIndex = (i * levels.count) / pointCount
-            let level = levels[min(levelIndex, levels.count - 1)]
+            // Create smooth flowing sine waves
+            let wave = sin(progress * .pi * frequency + phase) * 20 * amplitude
             
-            // Create flowing sine wave
-            let wave1 = sin(progress * .pi * 3 + phase) * 15
-            let wave2 = sin(progress * .pi * 5 + phase * 1.3) * 10
-            let wave3 = sin(progress * .pi * 7 + phase * 0.7) * 5
+            // Audio level affects the amplitude smoothly across entire wave
+            let audioAmplitude = Double(audioLevel) * 30 * amplitude
             
-            // Combine waves with audio level
-            let waveOffset = (wave1 + wave2 + wave3) * amplitude
-            let audioOffset = Double(level) * 50 * amplitude
-            
-            let y = midHeight + CGFloat(waveOffset) - CGFloat(audioOffset)
+            let y = midHeight + CGFloat(wave) * CGFloat(1.0 + audioLevel * 0.5)
             
             if i == 0 {
                 path.move(to: CGPoint(x: x, y: y))
             } else {
-                // Smooth curve
+                // Create very smooth bezier curves
                 let previousX = CGFloat(i - 1) * segmentWidth
                 let previousPoint = path.currentPoint ?? CGPoint(x: previousX, y: midHeight)
-                let controlPoint1 = CGPoint(x: previousX + segmentWidth / 2, y: previousPoint.y)
-                let controlPoint2 = CGPoint(x: x - segmentWidth / 2, y: y)
+                
+                // Control points for smooth curves
+                let controlPoint1X = previousX + segmentWidth * 0.4
+                let controlPoint2X = x - segmentWidth * 0.4
+                
+                let controlPoint1 = CGPoint(x: controlPoint1X, y: previousPoint.y)
+                let controlPoint2 = CGPoint(x: controlPoint2X, y: y)
+                
                 path.addCurve(to: CGPoint(x: x, y: y), control1: controlPoint1, control2: controlPoint2)
             }
         }

@@ -124,7 +124,7 @@ struct PlayerView: View {
                 VStack(spacing: 15) {
                     // Siri-style Waveform
                     if audioManager.isPlaying {
-                        SiriWaveformView(levels: audioManager.audioLevels)
+                        SiriWaveformView(audioLevel: audioManager.smoothedAudioLevel)
                             .padding(.top, 30)
                     } else {
                         Image(systemName: "music.note")
