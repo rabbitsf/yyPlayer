@@ -144,54 +144,54 @@ struct CircularEqualizerView: View {
         let avgLevel = levels.reduce(0, +) / CGFloat(levels.count)
         
         ZStack {
-            // MASSIVE pulsing outer glow
+            // Subtle outer glow
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            Color.cyan.opacity(0.7 + avgLevel * 0.3),
-                            Color.blue.opacity(0.5 + avgLevel * 0.3),
-                            Color.purple.opacity(0.3 + avgLevel * 0.2),
+                            Color.cyan.opacity(0.4 + avgLevel * 0.2),
+                            Color.blue.opacity(0.3 + avgLevel * 0.15),
+                            Color.purple.opacity(0.2 + avgLevel * 0.1),
                             Color.clear
                         ]),
                         center: .center,
-                        startRadius: 30,
-                        endRadius: 160
+                        startRadius: 40,
+                        endRadius: 140
                     )
                 )
-                .frame(width: 320, height: 320)
-                .scaleEffect(1.0 + avgLevel * 0.8) // HUGE pulse
-                .blur(radius: 20)
+                .frame(width: 280, height: 280)
+                .scaleEffect(1.0 + avgLevel * 0.3)
+                .blur(radius: 25)
             
-            // Pulsing rings
-            ForEach(0..<4) { ring in
+            // Subtle pulsing rings
+            ForEach(0..<3) { ring in
                 Circle()
                     .stroke(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                Color.cyan.opacity(0.7 - Double(ring) * 0.15),
-                                Color.blue.opacity(0.6 - Double(ring) * 0.12),
-                                Color.purple.opacity(0.5 - Double(ring) * 0.1)
+                                Color.cyan.opacity(0.4 - Double(ring) * 0.1),
+                                Color.blue.opacity(0.3 - Double(ring) * 0.08),
+                                Color.purple.opacity(0.2 - Double(ring) * 0.06)
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 3
+                        lineWidth: 2
                     )
-                    .frame(width: 130 + CGFloat(ring) * 40, height: 130 + CGFloat(ring) * 40)
-                    .scaleEffect(1.0 + avgLevel * CGFloat(0.4 - Double(ring) * 0.05))
-                    .opacity(0.6 - Double(ring) * 0.1)
+                    .frame(width: 130 + CGFloat(ring) * 35, height: 130 + CGFloat(ring) * 35)
+                    .scaleEffect(1.0 + avgLevel * CGFloat(0.15 - Double(ring) * 0.03))
+                    .opacity(0.4 - Double(ring) * 0.08)
             }
             
-            // DRAMATIC radiating bars
+            // Balanced radiating bars
             ForEach(0..<barCount, id: \.self) { index in
                 let level = getLevelForBar(index)
                 
-                RoundedRectangle(cornerRadius: 5)
+                RoundedRectangle(cornerRadius: 4)
                     .fill(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                Color.cyan.opacity(0.9 + level * 0.1),
+                                Color.cyan.opacity(0.8 + level * 0.2),
                                 Color.blue,
                                 Color.purple
                             ]),
@@ -199,53 +199,50 @@ struct CircularEqualizerView: View {
                             endPoint: .top
                         )
                     )
-                    .frame(width: 8, height: 10 + level * 100) // MASSIVE height range!
-                    .offset(y: -70)
+                    .frame(width: 6, height: 15 + level * 60) // Moderate height range
+                    .offset(y: -65)
                     .rotationEffect(.degrees(Double(index) * (360.0 / Double(barCount))))
-                    .shadow(color: Color.cyan, radius: 10, x: 0, y: 0)
-                    .shadow(color: Color.blue.opacity(0.9), radius: 15, x: 0, y: 0)
-                    .shadow(color: Color.purple.opacity(0.7), radius: 20, x: 0, y: 0)
+                    .shadow(color: Color.cyan.opacity(0.6), radius: 6, x: 0, y: 0)
+                    .shadow(color: Color.blue.opacity(0.5), radius: 10, x: 0, y: 0)
             }
             
-            // EXPLOSIVE center pulse
+            // Gentle center pulse
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            Color.cyan.opacity(0.6 + avgLevel * 0.4),
-                            Color.blue.opacity(0.5 + avgLevel * 0.4),
-                            Color.purple.opacity(0.4 + avgLevel * 0.3),
+                            Color.cyan.opacity(0.4 + avgLevel * 0.2),
+                            Color.blue.opacity(0.3 + avgLevel * 0.2),
+                            Color.purple.opacity(0.2 + avgLevel * 0.15),
                             Color.clear
                         ]),
                         center: .center,
                         startRadius: 0,
-                        endRadius: 70
+                        endRadius: 60
                     )
                 )
-                .frame(width: 140, height: 140)
-                .scaleEffect(0.7 + avgLevel * 0.8)
+                .frame(width: 120, height: 120)
+                .scaleEffect(0.8 + avgLevel * 0.3)
             
-            // Center icon with MASSIVE pulse
+            // Center icon with subtle pulse
             Image(systemName: "music.note")
-                .font(.system(size: 60))
+                .font(.system(size: 55))
                 .foregroundStyle(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color.white,
                             Color.cyan,
-                            Color.blue
+                            Color.blue,
+                            Color.purple
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: Color.cyan, radius: 25, x: 0, y: 0)
-                .shadow(color: Color.blue, radius: 35, x: 0, y: 0)
-                .shadow(color: Color.purple, radius: 45, x: 0, y: 0)
-                .scaleEffect(0.8 + avgLevel * 0.7)
-                .rotationEffect(.degrees(avgLevel * 15))
+                .shadow(color: Color.cyan.opacity(0.6), radius: 12, x: 0, y: 0)
+                .shadow(color: Color.blue.opacity(0.5), radius: 18, x: 0, y: 0)
+                .scaleEffect(0.9 + avgLevel * 0.25)
         }
-        .frame(width: 320, height: 320)
+        .frame(width: 280, height: 280)
     }
     
     private func getLevelForBar(_ index: Int) -> CGFloat {
