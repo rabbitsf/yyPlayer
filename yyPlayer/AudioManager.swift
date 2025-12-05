@@ -14,6 +14,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var currentIndex: Int = 0
     private var folderPath: String = ""
     private var playbackPositions: [String: Double] = [:] // Tracks playback positions
+    private var meteringTimer: Timer? // Store timer reference
 
     @Published var currentSongTitle: String = "" // Tracks the current song's title
     @Published var isPlaying: Bool = false
@@ -131,15 +132,27 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             player.pause()
             saveCurrentPlaybackPosition() // Save the current position when paused
             isPlaying = false
+            
+            // Stop metering when paused
+            meteringTimer?.invalidate()
+            meteringTimer = nil
         } else {
             player.play()
             isPlaying = true
+            
+            // Restart metering when resumed
+            startMeteringTimer()
         }
         updateNowPlayingInfo()
     }
 
     func stopPlayback() {
         saveCurrentPlaybackPosition() // Save the position before stopping
+        
+        // CRITICAL: Invalidate and clear the timer
+        meteringTimer?.invalidate()
+        meteringTimer = nil
+        
         player?.stop()
         isPlaying = false
         audioLevels = Array(repeating: 0.1, count: 8) // Reset levels
@@ -147,7 +160,12 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     private func startMeteringTimer() {
-        Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] timer in
+        // CRITICAL: Invalidate any existing timer first to prevent accumulation
+        meteringTimer?.invalidate()
+        meteringTimer = nil
+        
+        // Create new timer and store reference
+        meteringTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] timer in
             guard let self = self, let player = self.player, self.isPlaying else {
                 timer.invalidate()
                 return
