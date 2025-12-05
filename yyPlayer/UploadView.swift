@@ -194,12 +194,22 @@ struct UploadView: View {
                     }
                     
                     if serverManager.isServerRunning, let ip = ipAddress {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Access at: http://\(ip):8080")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.9))
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("Access at: http://\(ip):8080")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.9))
+                            }
+                            
+                            HStack {
+                                Image(systemName: "lock.open.fill")
+                                    .foregroundColor(.yellow)
+                                Text("Screen will not auto-lock while server is active")
+                                    .font(.caption2)
+                                    .foregroundColor(.yellow.opacity(0.9))
+                            }
                         }
                         .padding(.top, 5)
                     } else {

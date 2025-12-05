@@ -1,27 +1,28 @@
-# yyPlayer – Beautiful Offline Music Player
+# yyPlayer – Beautiful Offline Media Player
 
-`yyPlayer` is a feature-rich, offline iOS music player with a stunning UI that lets you organize, import, and play your music collection with ease. Supports local audio files (MP3 & M4A) with multiple import methods including a WiFi upload server.
+`yyPlayer` is a feature-rich, offline iOS media player with a stunning UI that lets you organize, import, and play your music and video collection with ease. Supports local audio files (MP3 & M4A) and video files (MP4, MOV, M4V & 3GP) with multiple import methods including a WiFi upload server.
 
 ## ✨ Key Features
 
-### 🎵 Music Library Management
-- **Folder-based organization** – Create, rename, and delete folders to organize your music
-- **Beautiful gradient UI** – Modern interface with decorative music-themed elements throughout
-- **Smart navigation** – Music icons next to each folder for easy identification
-- **Swipe gestures** – Swipe left to delete folders or individual songs
+### 🎵 Media Library Management
+- **Folder-based organization** – Create, rename, and delete folders to organize your music and videos
+- **Beautiful gradient UI** – Modern interface with decorative music and video-themed elements throughout
+- **Smart navigation** – Icons next to each file for easy identification (music notes for audio, film icons for video)
+- **Swipe gestures** – Swipe left to delete folders or individual media files
 
 ### 📤 Multiple Import Methods
 
-#### 1. **WiFi Upload Server** (NEW!)
-Upload music directly from your computer via web browser:
+#### 1. **WiFi Upload Server**
+Upload music and videos directly from your computer via web browser:
 - Tap **Upload** button on the home screen
 - Toggle the server ON to start
 - View your device's IP address
 - Open the provided URL in any browser on the same WiFi network
 - **Create new folders** directly from the web interface
-- **Drag & drop** multiple MP3/M4A files at once
+- **Drag & drop** multiple audio/video files at once
 - **Real-time progress bars** show upload status for each file
 - **Upload completion notifications** when finished
+- **Screen stays awake** while server is running (prevents auto-lock)
 
 #### 2. **Files App Import**
 - Tap **Import** on the home screen
@@ -29,18 +30,22 @@ Upload music directly from your computer via web browser:
 - Browse and select audio files from the Files app
 - Import multiple files at once
 
-### 🎛️ Advanced Music Player
+### 🎛️ Advanced Media Player
+- **Dual player support**: Separate audio player and video player
 - **Full playback controls**: Play, Pause, Next, Previous
 - **Seek bar** with time display (elapsed/remaining)
 - **Repeat modes**: Repeat One, Repeat All
 - **Shuffle mode** for randomized playback
-- **Background playback** with lock screen controls
-- **Remembers playback position** when you pause
+- **Background playback** with lock screen controls (audio)
+- **Native video player** with full AVPlayer support
+- **Full-screen video mode** - Tap full-screen button to watch in landscape
+- **Picture-in-Picture** support for videos
+- **Remembers playback position** when you pause (audio)
 
-### 📱 Song Management (NEW!)
-- **Multi-select mode** – Select multiple songs at once
-- **Batch move** – Move selected songs to different folders
-- **Batch delete** – Delete multiple songs with one action
+### 📱 Media File Management
+- **Multi-select mode** – Select multiple files at once
+- **Batch move** – Move selected files to different folders
+- **Batch delete** – Delete multiple files with one action
 - **Confirmation dialogs** to prevent accidental deletion
 
 ### 🎨 Beautiful Design
@@ -52,6 +57,7 @@ Upload music directly from your computer via web browser:
 
 ## 🎼 Supported Formats
 - **Audio**: `.mp3`, `.m4a`
+- **Video**: `.mp4`, `.mov`, `.m4v`, `.3gp`
 
 ## 📋 Requirements
 - **iOS**: 15.0 or later
@@ -73,40 +79,42 @@ Upload music directly from your computer via web browser:
 3. Enter a folder name
 4. Tap OK
 
-#### Importing Music via WiFi Upload
+#### Importing Media via WiFi Upload
 1. Tap the **Upload** button on the home screen
 2. Toggle the upload server **ON**
 3. Note the IP address displayed (e.g., `http://192.168.1.100:8080`)
 4. On your computer, open a web browser
 5. Enter the IP address in the browser
 6. Select or create a destination folder
-7. Drag and drop your music files or click to browse
+7. Drag and drop your audio/video files or click to browse
 8. Wait for uploads to complete (progress bars show status)
 
-#### Importing Music via Files App
+#### Importing Media via Files App
 1. Tap the **Import** button
 2. Tap **Select or Create Folder**
 3. Choose an existing folder or create a new one
 4. Tap **Import Music Files**
-5. Browse to your audio files in the Files app
-6. Select one or more `.mp3` or `.m4a` files
+5. Browse to your audio/video files in the Files app
+6. Select one or more supported files (MP3, M4A, MP4, MOV, M4V, 3GP)
 7. Tap **Open** to import
 
-#### Playing Music
-1. Tap a folder to view its songs
-2. Tap a song to start playing
-3. Use the player controls:
+#### Playing Media
+1. Tap a folder to view its contents
+2. Tap an audio file (🎵) or video file (🎬) to start playing
+3. **Audio files** open the audio player with album art visualization
+4. **Video files** open the video player with embedded video display
+5. Use the player controls:
    - **Play/Pause** (large center button)
    - **Previous/Next** (side buttons)
-   - **Repeat One** (repeat current song)
+   - **Repeat One** (repeat current item)
    - **Repeat All** (loop entire folder)
    - **Shuffle** (randomize playback order)
    - **Seek bar** to jump to any position
 
-#### Managing Songs
+#### Managing Media Files
 1. Open a folder
 2. Tap **Select** in the top right
-3. Tap songs to select them (green checkmark appears)
+3. Tap files to select them (green checkmark appears)
 4. Choose an action:
    - **Move** – Transfer to another folder
    - **Delete** – Remove permanently (with confirmation)
@@ -115,33 +123,41 @@ Upload music directly from your computer via web browser:
 ## 📱 App Structure
 
 ### Main Screens
-- **Music Player** (Home) – View all folders, access main features
-- **Folder View** – Browse songs in a folder, multi-select management
-- **Player View** – Full-screen playback with all controls
+- **Media Player** (Home) – View all folders, access main features
+- **Folder View** – Browse audio/video files in a folder, multi-select management
+- **Audio Player View** – Full-screen audio playback with all controls
+- **Video Player View** – Full-screen video playback with embedded player
 - **Import View** – Import from Files app
 - **Upload View** – WiFi upload server controls and status
 
 ## 🔒 Privacy & Storage
 - **100% offline** – No internet connection required (except for WiFi uploads)
-- **Local storage only** – All music stored in app's Documents directory
-- **No data collection** – Your music stays on your device
+- **Local storage only** – All media stored in app's Documents directory
+- **No data collection** – Your media stays on your device
 - **No tracking** – Complete privacy
 
 ## 🛠️ Technical Details
 - Built with **SwiftUI** for iOS
-- Uses **AVAudioPlayer** for playback
+- Uses **AVAudioPlayer** for audio playback
+- Uses **AVPlayer** and **AVKit** for video playback
 - **Network framework** for WiFi upload server
 - **FileManager** for local file operations
 - Supports **background audio** with AVAudioSession
 - **Lock screen controls** via MPNowPlayingInfoCenter
+- **Native video rendering** with VideoPlayer component
 
 ## 📝 Tips & Tricks
-- Use **WiFi upload** for batch importing large music collections from your computer
-- Organize by genre, artist, or mood using folders
-- **Swipe left** on any folder or song for quick delete
+- Use **WiFi upload** for batch importing large media collections from your computer
+- Organize by genre, artist, mood, or type using folders
+- **Swipe left** on any folder or media file for quick delete
 - Use **Shuffle** mode to discover forgotten favorites
-- **Repeat One** is perfect for learning song lyrics
+- **Repeat One** is perfect for learning song lyrics or watching tutorial videos
 - The upload server automatically turns off when you leave the Upload screen
+- **Screen won't auto-lock** while upload server is running - perfect for long uploads
+- Video files are automatically identified with a film icon 🎬
+- Audio files show a music note icon 🎵
+- **Tap full-screen button** in video player to watch in landscape mode
+- **Rotate your device** to landscape for better video viewing experience
 
 ## 🐛 Troubleshooting
 
@@ -152,10 +168,11 @@ Upload music directly from your computer via web browser:
 - Try disabling VPN if active
 - Restart the app if connection issues persist
 
-### Songs Not Importing
-- Verify file format is `.mp3` or `.m4a`
+### Media Files Not Importing
+- Verify file format is supported (MP3, M4A, MP4, MOV, M4V, 3GP)
 - Check that files aren't corrupted
 - Ensure sufficient storage space on device
+- For video files, ensure they use codecs supported by iOS (H.264/HEVC for video, AAC for audio)
 
 ### Playback Issues
 - Close and reopen the app
@@ -164,10 +181,13 @@ Upload music directly from your computer via web browser:
 
 ## 🎯 Future Enhancements
 - Playlist creation and management
-- Equalizer settings
+- Equalizer settings for audio
 - Search functionality
 - Metadata editing (artist, album, artwork)
-- More audio format support
+- Video quality settings
+- Subtitle support for videos
+- More media format support
+- Chromecast/AirPlay support
 
 ## 📄 License
 This project is open source. Feel free to use, modify, and distribute.
@@ -177,4 +197,4 @@ Built with ❤️ using Swift and SwiftUI
 
 ---
 
-**Enjoy your music! 🎵**
+**Enjoy your music and videos! 🎵🎬**

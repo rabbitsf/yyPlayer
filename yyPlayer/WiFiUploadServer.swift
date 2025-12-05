@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Combine
+import UIKit
 
 class WiFiUploadServer: ObservableObject {
     static let shared = WiFiUploadServer()
@@ -11,6 +12,7 @@ class WiFiUploadServer: ObservableObject {
     private var listener: NWListener?
     private let port: UInt16 = 8080
     private var activeConnections: [NWConnection] = []
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     
     private init() {}
     
@@ -18,6 +20,14 @@ class WiFiUploadServer: ObservableObject {
         guard !isServerRunning else { return }
         
         do {
+            // Prevent screen from locking while server is running
+            DispatchQueue.main.async {
+                UIApplication.shared.isIdleTimerDisabled = true
+            }
+            
+            // Start background task to keep server running
+            startBackgroundTask()
+            
             let parameters = NWParameters.tcp
             parameters.allowLocalEndpointReuse = true
             
@@ -33,11 +43,16 @@ class WiFiUploadServer: ObservableObject {
                     case .ready:
                         self?.isServerRunning = true
                         print("✅ WiFi Upload Server started on port \(self?.port ?? 8080)")
+                        print("✅ Screen lock disabled to keep server active")
                     case .failed(let error):
                         print("❌ Server failed: \(error)")
                         self?.isServerRunning = false
+                        self?.endBackgroundTask()
+                        UIApplication.shared.isIdleTimerDisabled = false
                     case .cancelled:
                         self?.isServerRunning = false
+                        self?.endBackgroundTask()
+                        UIApplication.shared.isIdleTimerDisabled = false
                     default:
                         break
                     }
@@ -47,6 +62,10 @@ class WiFiUploadServer: ObservableObject {
             listener?.start(queue: .global(qos: .userInitiated))
         } catch {
             print("❌ Failed to start server: \(error)")
+            endBackgroundTask()
+            DispatchQueue.main.async {
+                UIApplication.shared.isIdleTimerDisabled = false
+            }
         }
     }
     
@@ -55,7 +74,31 @@ class WiFiUploadServer: ObservableObject {
         activeConnections.forEach { $0.cancel() }
         activeConnections.removeAll()
         isServerRunning = false
+        
+        // Re-enable screen lock
+        DispatchQueue.main.async {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+        
+        // End background task
+        endBackgroundTask()
+        
         print("🛑 Server stopped")
+        print("✅ Screen lock re-enabled")
+    }
+    
+    private func startBackgroundTask() {
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            // Background task is about to expire
+            self?.endBackgroundTask()
+        }
+    }
+    
+    private func endBackgroundTask() {
+        if backgroundTask != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTask)
+            backgroundTask = .invalid
+        }
     }
     
     private func handleNewConnection(_ connection: NWConnection) {
@@ -272,7 +315,8 @@ class WiFiUploadServer: ObservableObject {
         var successCount = 0
         for (filename, fileData) in files {
             let ext = (filename as NSString).pathExtension.lowercased()
-            guard ext == "mp3" || ext == "m4a" else {
+            let supportedExtensions: Set<String> = ["mp3", "m4a", "mp4", "mov", "m4v", "3gp"]
+            guard supportedExtensions.contains(ext) else {
                 print("⚠️ Skipping \(filename) - unsupported format")
                 continue
             }
@@ -645,8 +689,8 @@ class WiFiUploadServer: ObservableObject {
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>🎵 Music Upload</h1>
-                    <p>Upload MP3 and M4A files to your music library</p>
+                    <h1>🎵 Media Upload</h1>
+                    <p>Upload MP3, M4A audio files and MP4, MOV video files to your library</p>
                 </div>
                 <div class="content">
                     <div class="section">
@@ -666,10 +710,10 @@ class WiFiUploadServer: ObservableObject {
                     <div class="section">
                         <h2>📤 Upload Files</h2>
                         <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                            <p>🎵 Drag & drop files here or click to browse</p>
+                            <p>🎵🎬 Drag & drop audio/video files here or click to browse</p>
                             <button type="button" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">Select Files</button>
                         </div>
-                        <input type="file" id="fileInput" class="file-input" multiple accept=".mp3,.m4a">
+                        <input type="file" id="fileInput" class="file-input" multiple accept=".mp3,.m4a,.mp4,.mov,.m4v,.3gp">
                         <div id="progress"></div>
                     </div>
                 </div>
@@ -731,8 +775,9 @@ class WiFiUploadServer: ObservableObject {
                     
                     Array.from(files).forEach((file, i) => {
                         const ext = file.name.split('.').pop().toLowerCase();
-                        if (ext !== 'mp3' && ext !== 'm4a') {
-                            alert(file.name + ' is not supported (MP3/M4A only)');
+                        const supportedFormats = ['mp3', 'm4a', 'mp4', 'mov', 'm4v', '3gp'];
+                        if (!supportedFormats.includes(ext)) {
+                            alert(file.name + ' is not supported (MP3/M4A/MP4/MOV/M4V/3GP only)');
                             return;
                         }
                         

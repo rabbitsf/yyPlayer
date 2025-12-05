@@ -3,6 +3,7 @@ import SwiftUI
 struct FolderView: View {
     let folderName: String
     @ObservedObject var audioManager: AudioManager
+    @StateObject private var videoManager = VideoManager()
     @State private var songs: [String] = []
     @State private var isSelectionMode = false
     @State private var selectedSongs: Set<String> = []
@@ -10,7 +11,7 @@ struct FolderView: View {
     @State private var showDeleteConfirmation = false
     
     private func isCurrentSong(_ song: String) -> Bool {
-        audioManager.currentSongTitle == song
+        audioManager.currentSongTitle == song || videoManager.currentSongTitle == song
     }
 
     var body: some View {
@@ -207,7 +208,7 @@ struct FolderView: View {
     }
 
     private func loadSongs() {
-        songs = FileManagerHelper.shared.getSongs(in: folderName)
+        songs = FileManagerHelper.shared.getAllMediaFiles(in: folderName)
     }
 
     private func deleteSong(at offsets: IndexSet) {
@@ -263,40 +264,55 @@ struct FolderView: View {
     
     @ViewBuilder
     private func normalModeRow(for song: String) -> some View {
-        NavigationLink(destination: PlayerView(folderName: folderName, initialSongName: song, audioManager: audioManager)) {
-            HStack {
-                songIcon(for: song)
-                songTitle(for: song)
+        if FileManagerHelper.shared.isVideoFile(song) {
+            NavigationLink(destination: VideoPlayerView(folderName: folderName, initialSongName: song, videoManager: videoManager)) {
+                HStack {
+                    songIcon(for: song)
+                    songTitle(for: song)
+                }
+                .padding(.vertical, 4)
             }
-            .padding(.vertical, 4)
+            .listRowBackground(rowBackground(for: song))
+        } else {
+            NavigationLink(destination: PlayerView(folderName: folderName, initialSongName: song, audioManager: audioManager)) {
+                HStack {
+                    songIcon(for: song)
+                    songTitle(for: song)
+                }
+                .padding(.vertical, 4)
+            }
+            .listRowBackground(rowBackground(for: song))
         }
-        .listRowBackground(rowBackground(for: song))
     }
     
-    @ViewBuilder
     private func songIcon(for song: String) -> some View {
         let isCurrent = isCurrentSong(song)
-        let iconName = isCurrent ? "music.note" : "music.note.list"
+        let isVideo = FileManagerHelper.shared.isVideoFile(song)
+        let iconName: String
         
-        Image(systemName: iconName)
+        if isVideo {
+            iconName = isCurrent ? "film.fill" : "film"
+        } else {
+            iconName = isCurrent ? "music.note" : "music.note.list"
+        }
+        
+        return Image(systemName: iconName)
             .font(.title3)
             .foregroundStyle(isCurrent ? currentSongGradient : inactiveSongGradient)
     }
     
-    @ViewBuilder
     private func songTitle(for song: String) -> some View {
         let isCurrent = isCurrentSong(song)
         
-        Text(song)
+        return Text(song)
             .foregroundColor(isCurrent ? .cyan : .primary)
             .font(isCurrent ? .headline : .body)
     }
     
-    @ViewBuilder
     private func rowBackground(for song: String) -> some View {
         let isCurrent = isCurrentSong(song)
         
-        RoundedRectangle(cornerRadius: 10)
+        return RoundedRectangle(cornerRadius: 10)
             .fill(isCurrent ? Color.cyan.opacity(0.2) : Color.white.opacity(0.15))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)

@@ -43,6 +43,50 @@ class FileManagerHelper {
             return []
         }
     }
+    
+    func getVideos(in folder: String) -> [String] {
+        let folderPath = getFolderPath(folder)
+        do {
+            let contents = try fileManager.contentsOfDirectory(atPath: folderPath)
+            // Support multiple video formats (e.g. .mp4, .mov, .m4v, .3gp)
+            let supportedExtensions: Set<String> = ["mp4", "mov", "m4v", "3gp"]
+            return contents.filter { fileName in
+                let ext = (fileName as NSString).pathExtension.lowercased()
+                return supportedExtensions.contains(ext)
+            }
+        } catch {
+            print("Failed to get videos in folder \(folder): \(error)")
+            return []
+        }
+    }
+    
+    func getAllMediaFiles(in folder: String) -> [String] {
+        let folderPath = getFolderPath(folder)
+        do {
+            let contents = try fileManager.contentsOfDirectory(atPath: folderPath)
+            // Support both audio and video formats
+            let supportedExtensions: Set<String> = ["mp3", "m4a", "mp4", "mov", "m4v", "3gp"]
+            return contents.filter { fileName in
+                let ext = (fileName as NSString).pathExtension.lowercased()
+                return supportedExtensions.contains(ext)
+            }
+        } catch {
+            print("Failed to get media files in folder \(folder): \(error)")
+            return []
+        }
+    }
+    
+    func isVideoFile(_ filename: String) -> Bool {
+        let videoExtensions: Set<String> = ["mp4", "mov", "m4v", "3gp"]
+        let ext = (filename as NSString).pathExtension.lowercased()
+        return videoExtensions.contains(ext)
+    }
+    
+    func isAudioFile(_ filename: String) -> Bool {
+        let audioExtensions: Set<String> = ["mp3", "m4a"]
+        let ext = (filename as NSString).pathExtension.lowercased()
+        return audioExtensions.contains(ext)
+    }
 
     func getFolderPath(_ folder: String) -> String {
         return "\(basePath)/\(folder)"

@@ -90,8 +90,8 @@ struct ContentView: View {
                                 }
                                 .padding(.vertical, 10)
                                 
-                                // My Music Library title
-                                Text("My Music Library")
+                                // My Media Library title
+                                Text("My Media Library")
                                     .font(.system(size: 22, weight: .bold))
                                     .foregroundColor(.white)
                             }
@@ -213,7 +213,7 @@ struct ContentView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {
-                        Text("Music Player")
+                        Text("Media Player")
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(.white)
                     }
