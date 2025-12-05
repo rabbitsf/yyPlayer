@@ -122,10 +122,10 @@ struct PlayerView: View {
             VStack(spacing: 30) {
                 // Song Title with Equalizer
                 VStack(spacing: 15) {
-                    // Pulsing Circle Visualizer
+                    // Circular Equalizer
                     if audioManager.isPlaying {
-                        PulsingCircleView(audioLevel: audioManager.smoothedAudioLevel)
-                            .padding(.top, 30)
+                        CircularEqualizerView(levels: audioManager.audioLevels)
+                            .padding(.top, 20)
                     } else {
                         Image(systemName: "music.note")
                             .font(.system(size: 60))
