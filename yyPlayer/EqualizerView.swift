@@ -204,7 +204,8 @@ struct CircularEqualizerView: View {
                     .rotationEffect(.degrees(Double(index) * (360.0 / Double(barCount))))
                     .shadow(color: Color.cyan.opacity(0.6), radius: 6, x: 0, y: 0)
                     .shadow(color: Color.blue.opacity(0.5), radius: 10, x: 0, y: 0)
-                    .animation(.easeInOut(duration: 0.15), value: level)
+                    .animation(.linear(duration: 0.1), value: level)
+                    .id("\(index)-\(level)") // Add unique ID to help SwiftUI track changes
             }
             
             // Gentle center pulse

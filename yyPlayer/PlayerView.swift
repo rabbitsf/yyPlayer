@@ -380,8 +380,9 @@ struct PlayerView: View {
         progressTimer?.invalidate()
         progressTimer = nil
         
-        // Create new timer and store reference
-        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [self] _ in
+        // Create new timer and store reference with weak self to prevent retain cycles
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak audioManager] _ in
+            guard let audioManager = audioManager else { return }
             currentTime = audioManager.getCurrentTime()
         }
     }

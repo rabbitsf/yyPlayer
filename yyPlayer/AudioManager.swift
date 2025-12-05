@@ -164,10 +164,17 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         meteringTimer?.invalidate()
         meteringTimer = nil
         
-        // Create new timer and store reference
-        meteringTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] timer in
-            guard let self = self, let player = self.player, self.isPlaying else {
+        // Create new timer and store reference - reduced frequency to prevent overload
+        meteringTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
+            guard let self = self else {
                 timer.invalidate()
+                return
+            }
+            
+            // Check if still playing
+            guard let player = self.player, self.isPlaying else {
+                timer.invalidate()
+                self.meteringTimer = nil
                 return
             }
             
@@ -184,24 +191,22 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             // More aggressive power curve for explosive movement
             let boostedLevel = pow(normalizedLevel, 0.5)
             
-            // Create varied bar heights with smoothing for graceful movement
-            DispatchQueue.main.async {
-                let newLevels = (0..<8).map { index -> CGFloat in
-                    // Variance between bars
-                    let variance = CGFloat.random(in: 0.5...1.5)
-                    let baseLevel = CGFloat(boostedLevel) * variance
-                    let targetLevel = max(0.2, min(1.0, baseLevel))
-                    
-                    // Smooth transition - 70% old + 30% new
-                    let smoothed = self.audioLevels[index] * 0.7 + targetLevel * 0.3
-                    return smoothed
-                }
-                self.audioLevels = newLevels
+            // Update levels directly on main thread (we're already on a background thread from Timer)
+            let newLevels = (0..<8).map { index -> CGFloat in
+                // Variance between bars
+                let variance = CGFloat.random(in: 0.5...1.5)
+                let baseLevel = CGFloat(boostedLevel) * variance
+                let targetLevel = max(0.2, min(1.0, baseLevel))
                 
-                // Smooth single level for waveform - much heavier smoothing
-                let targetLevel = CGFloat(boostedLevel) * 0.8 + 0.2 // Range 0.2-1.0
-                self.smoothedAudioLevel = self.smoothedAudioLevel * 0.85 + targetLevel * 0.15 // Heavy smoothing
+                // Smooth transition - 70% old + 30% new
+                let smoothed = self.audioLevels[index] * 0.7 + targetLevel * 0.3
+                return smoothed
             }
+            self.audioLevels = newLevels
+            
+            // Smooth single level for waveform - much heavier smoothing
+            let targetLevel = CGFloat(boostedLevel) * 0.8 + 0.2 // Range 0.2-1.0
+            self.smoothedAudioLevel = self.smoothedAudioLevel * 0.85 + targetLevel * 0.15 // Heavy smoothing
         }
     }
 
