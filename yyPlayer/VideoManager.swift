@@ -108,7 +108,7 @@ class VideoManager: NSObject, ObservableObject {
         let songPath = "\(folderPath)/\(songs[currentIndex])"
         let url = URL(fileURLWithPath: songPath)
         
-        // Remove old observer
+        // Stop and clean up current player
         if let observer = timeObserver {
             player?.removeTimeObserver(observer)
             timeObserver = nil
@@ -117,6 +117,12 @@ class VideoManager: NSObject, ObservableObject {
         // Remove notification observers
         NotificationCenter.default.removeObserver(self)
         
+        // Pause and nil out the old player to stop playback
+        player?.pause()
+        player = nil
+        playerItem = nil
+        
+        // Create new player
         playerItem = AVPlayerItem(url: url)
         player = AVPlayer(playerItem: playerItem)
         
