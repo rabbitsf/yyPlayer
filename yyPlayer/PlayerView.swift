@@ -122,10 +122,10 @@ struct PlayerView: View {
             VStack(spacing: 30) {
                 // Song Title with Equalizer
                 VStack(spacing: 15) {
-                    // Circular Equalizer
+                    // Siri-style Waveform
                     if audioManager.isPlaying {
-                        EqualizerCircleView(levels: audioManager.audioLevels)
-                            .padding(.top, 20)
+                        SiriWaveformView(levels: audioManager.audioLevels)
+                            .padding(.top, 30)
                     } else {
                         Image(systemName: "music.note")
                             .font(.system(size: 60))
