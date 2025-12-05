@@ -21,6 +21,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var isShuffleEnabled: Bool = false // Tracks shuffle mode
     private var shuffledIndices: [Int] = [] // Tracks shuffled order
     private var shufflePosition: Int = 0 // Current position in shuffled array
+    @Published var audioLevels: [CGFloat] = Array(repeating: 0.1, count: 8) // Audio levels for equalizer
     
     func toggleRepeatOne() {
         repeatMode = repeatMode == .repeatOne ? .none : .repeatOne
@@ -110,9 +111,14 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             player = try AVAudioPlayer(contentsOf: url)
             player?.delegate = self
             player?.currentTime = position // Resume from the saved position
+            
+            // Enable metering for equalizer
+            player?.isMeteringEnabled = true
+            
             player?.play()
             isPlaying = true
             updateNowPlayingInfo()
+            startMeteringTimer()
         } catch {
             print("Failed to play song: \(error)")
         }
@@ -135,6 +141,34 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         saveCurrentPlaybackPosition() // Save the position before stopping
         player?.stop()
         isPlaying = false
+        audioLevels = Array(repeating: 0.1, count: 8) // Reset levels
+    }
+    
+    private func startMeteringTimer() {
+        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] timer in
+            guard let self = self, let player = self.player, self.isPlaying else {
+                timer.invalidate()
+                return
+            }
+            
+            player.updateMeters()
+            
+            // Get average power for both channels and convert to visual scale
+            let averagePower = (player.averagePower(forChannel: 0) + (player.numberOfChannels > 1 ? player.averagePower(forChannel: 1) : player.averagePower(forChannel: 0))) / 2.0
+            
+            // Convert decibels to 0-1 scale (dB range is typically -160 to 0)
+            let normalizedLevel = max(0.0, min(1.0, (averagePower + 50) / 50))
+            
+            // Create varied bar heights with some randomness for visual appeal
+            DispatchQueue.main.async {
+                self.audioLevels = (0..<8).map { index in
+                    let variance = CGFloat.random(in: 0.7...1.3)
+                    let baseLevel = CGFloat(normalizedLevel) * variance
+                    let smoothed = self.audioLevels[index] * 0.7 + baseLevel * 0.3 // Smooth transitions
+                    return max(0.1, min(1.0, smoothed))
+                }
+            }
+        }
     }
 
     func nextSong() {

@@ -120,28 +120,35 @@ struct PlayerView: View {
                 .padding(15)
             
             VStack(spacing: 30) {
-                // Song Title
-                VStack(spacing: 8) {
-                    Image(systemName: "music.note")
-                        .font(.system(size: 60))
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.cyan, Color.blue, Color.purple]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                // Song Title with Equalizer
+                VStack(spacing: 15) {
+                    // Circular Equalizer
+                    if audioManager.isPlaying {
+                        EqualizerCircleView(levels: audioManager.audioLevels)
+                            .padding(.top, 20)
+                    } else {
+                        Image(systemName: "music.note")
+                            .font(.system(size: 60))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.cyan, Color.blue, Color.purple]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                             )
-                        )
-                        .shadow(color: Color.cyan.opacity(0.5), radius: 10, x: 0, y: 5)
+                            .shadow(color: Color.cyan.opacity(0.5), radius: 10, x: 0, y: 5)
+                            .padding(.top, 40)
+                    }
                     
                     Text(audioManager.currentSongTitle)
-                        .font(.title)
+                        .font(.title3)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                         .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
                 }
-                .padding(.top, 40)
+                .padding(.top, 20)
 
                 // Progress Slider
                 VStack(spacing: 8) {
